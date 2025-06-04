@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enhanced Notion CSV Importer</title>
-    <meta name="description" content="Convert bank CSV files to Notion format. Simple, fast, free.">
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,6 +19,7 @@
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
+            --accent: #8b5cf6;
         }
         
         * {
@@ -83,6 +82,10 @@
             font-weight: 700;
             margin-bottom: 16px;
             color: var(--primary);
+            background: linear-gradient(135deg, #4361ee, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
         }
         
         .hero p {
@@ -100,6 +103,12 @@
             background: var(--card-bg);
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(67, 97, 238, 0.15);
         }
         
         .card-header {
@@ -154,6 +163,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            cursor: pointer;
         }
         
         .btn-primary {
@@ -182,14 +192,15 @@
             background-color: var(--primary-light);
         }
         
-        .btn-warning {
-            background-color: var(--warning);
+        .btn-accent {
+            background-color: var(--accent);
             border: none;
             color: white;
         }
         
-        .btn-warning:hover {
-            background-color: #e09008;
+        .btn-accent:hover {
+            background-color: #7c3aed;
+            transform: translateY(-2px);
             color: white;
         }
         
@@ -306,12 +317,14 @@
             margin-bottom: 8px;
             border: 1px solid var(--border);
             font-size: 1rem;
+            transition: all 0.3s;
         }
         
         .step.active .step-number {
             background-color: var(--primary);
             color: white;
             border-color: var(--primary);
+            transform: scale(1.1);
         }
         
         .step-label {
@@ -371,6 +384,12 @@
             background-color: var(--light);
             border-radius: 8px;
             border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        
+        .file-item:hover {
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
         .file-actions {
@@ -403,10 +422,12 @@
         .file-remove {
             color: #ef4444;
             cursor: pointer;
+            transition: all 0.2s;
         }
         
         .file-remove:hover {
             color: #dc2626;
+            transform: scale(1.1);
         }
 
         /* Donation Button */
@@ -451,6 +472,7 @@
             background-color: var(--primary);
             color: white;
             border-color: var(--primary);
+            transform: translateY(-2px);
         }
         
         .column-badge.selected .checkmark {
@@ -531,23 +553,28 @@
             justify-content: space-between;
             margin-bottom: 20px;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         .auto-map-btn {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 15px;
-            background-color: var(--warning);
+            padding: 10px 18px;
+            background: linear-gradient(135deg, var(--accent), #6d28d9);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(139, 92, 246, 0.2);
         }
         
         .auto-map-btn:hover {
-            background-color: #e09008;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(139, 92, 246, 0.3);
         }
         
         /* Merge Tags */
@@ -555,16 +582,25 @@
             display: inline-flex;
             align-items: center;
             background-color: rgba(67, 97, 238, 0.15);
-            padding: 3px 8px;
-            border-radius: 4px;
-            margin: 2px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin: 3px;
             font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .merge-tag:hover {
+            background-color: rgba(67, 97, 238, 0.25);
         }
         
         .merge-tag .remove {
             margin-left: 5px;
             cursor: pointer;
             color: var(--danger);
+        }
+        
+        .merge-tag .remove:hover {
+            transform: scale(1.1);
         }
         
         /* Merge Preview */
@@ -576,6 +612,33 @@
         .merge-preview-item:last-child {
             border-bottom: none;
         }
+        
+        /* Progress Bar */
+        .progress-container {
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* File Count Badge */
+        .file-count {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -584,7 +647,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-file-csv"></i>
-                <span>Notion CSV Importer</span>
+                <span>Enhanced CSV Importer</span>
             </a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
@@ -639,6 +702,7 @@
             <div class="card-header">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <span>Upload CSV Files</span>
+                <span class="file-count" id="file-count">0 files</span>
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
@@ -656,6 +720,9 @@
                 </div>
                 
                 <div class="spinner" id="loading-spinner"></div>
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
                 
                 <div class="mt-4" id="file-list-container" style="display: none;">
                     <h5 class="mb-3">Uploaded Files:</h5>
@@ -682,7 +749,7 @@
                             <p class="text-muted">Click columns to select for merging</p>
                         </div>
                         <button class="auto-map-btn" id="auto-map-btn">
-                            <i class="fas fa-magic"></i> Auto Map
+                            <i class="fas fa-magic me-1"></i> Auto Map Fields
                         </button>
                     </div>
                     <div class="d-flex flex-wrap gap-2 mb-4" id="csv-columns"></div>
@@ -699,7 +766,7 @@
                                 <label class="form-label">Separator</label>
                                 <input type="text" class="form-control" id="merge-separator" value=" " placeholder="e.g., space or comma">
                             </div>
-                            <button class="btn btn-primary" id="create-merge-btn">
+                            <button class="btn btn-accent" id="create-merge-btn">
                                 <i class="fas fa-plus me-2"></i>Create Merged Property
                             </button>
                             
@@ -800,7 +867,7 @@
         <div class="container-main">
             <div class="d-flex flex-column align-items-center">
                 <div class="mb-3">
-                    <h5 class="mb-0">Enhanced Notion CSV Importer</h5>
+                    <h5 class="mb-0">Enhanced CSV Importer</h5>
                     <p class="mb-0 text-muted">Column Merging & Auto-Mapping</p>
                 </div>
                 <div>
@@ -868,14 +935,6 @@
         let rowCounter = 0;
         let selectedColumns = [];
         
-        // Initialize navbar toggler position
-        document.addEventListener('DOMContentLoaded', function() {
-            const navbarToggler = document.querySelector('.navbar-toggler');
-            if (navbarToggler) {
-                navbarToggler.style.marginLeft = 'auto';
-            }
-        });
-        
         // Initialize the application
         document.addEventListener('DOMContentLoaded', initApp);
         
@@ -887,7 +946,9 @@
             
             document.getElementById('file-input').addEventListener('change', handleFileSelect);
             
-            document.getElementById('add-mapping-row').addEventListener('click', addMappingRow);
+            document.getElementById('add-mapping-row').addEventListener('click', function() {
+                addMappingRow();
+            });
             
             document.getElementById('apply-mapping-btn').addEventListener('click', applyMapping);
             
@@ -897,11 +958,10 @@
             
             document.getElementById('auto-map-btn').addEventListener('click', autoMapColumns);
             
+            document.getElementById('merge-separator').addEventListener('input', updateMergePreview);
+            
             // Set up drag and drop
             setupDragAndDrop();
-            
-            // Add initial mapping row
-            addMappingRow();
         }
         
         function setupDragAndDrop() {
@@ -956,9 +1016,10 @@
             
             // Show loading spinner
             document.getElementById('loading-spinner').style.display = 'block';
+            document.getElementById('progress-container').style.display = 'block';
             
             // Process each file
-            const filePromises = Array.from(files).map(file => {
+            const filePromises = Array.from(files).map((file, index) => {
                 return new Promise((resolve, reject) => {
                     // Skip if file already exists
                     if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
@@ -968,6 +1029,10 @@
                     
                     // Add to uploaded files
                     uploadedFiles.push(file);
+                    
+                    // Update progress bar
+                    const progress = ((index + 1) / files.length) * 100;
+                    document.getElementById('progress-bar').style.width = `${progress}%`;
                     
                     // Parse the CSV file
                     Papa.parse(file, {
@@ -1028,6 +1093,7 @@
                 
                 // Update UI
                 document.getElementById('file-list-container').style.display = 'block';
+                document.getElementById('file-count').textContent = `${uploadedFiles.length} file${uploadedFiles.length !== 1 ? 's' : ''}`;
                 
                 if (csvColumns.length > 0) {
                     document.getElementById('mapping-container').style.display = 'block';
@@ -1036,12 +1102,12 @@
                     
                     // Populate CSV columns
                     populateCSVColumns();
-                    
-                    // Update mapping dropdowns
-                    updateMappingDropdowns();
                 }
                 
+                // Hide loading spinner
                 document.getElementById('loading-spinner').style.display = 'none';
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('progress-bar').style.width = '0%';
             });
         }
         
@@ -1080,6 +1146,7 @@
                 
                 // Remove from uploaded files
                 uploadedFiles = uploadedFiles.filter(f => f.name !== file.name || f.size !== file.size);
+                document.getElementById('file-count').textContent = `${uploadedFiles.length} file${uploadedFiles.length !== 1 ? 's' : ''}`;
                 
                 // Remove file data
                 if (status === 'success') {
@@ -1117,7 +1184,6 @@
                 
                 // Update UI
                 populateCSVColumns();
-                updateMappingDropdowns();
                 
                 // If no files left, reset UI
                 if (uploadedFiles.length === 0) {
@@ -1127,6 +1193,7 @@
                     document.getElementById('step3').classList.remove('active');
                     document.getElementById('export-content').style.display = 'none';
                     document.getElementById('export-alert').style.display = 'block';
+                    document.getElementById('file-list-container').style.display = 'none';
                 }
             });
         }
@@ -1188,7 +1255,7 @@
                 
                 const previewItem = document.createElement('div');
                 previewItem.className = 'merge-preview-item';
-                previewItem.textContent = mergedValue;
+                previewItem.textContent = mergedValue || 'No data in this row';
                 previewContent.appendChild(previewItem);
             }
         }
@@ -1198,12 +1265,12 @@
             const separator = document.getElementById('merge-separator').value || ' ';
             
             if (!propertyName) {
-                showAlert('warning', 'Please enter a property name for the merged column');
+                alert('Please enter a property name for the merged column');
                 return;
             }
             
             if (selectedColumns.length < 2) {
-                showAlert('warning', 'Please select at least two columns to merge');
+                alert('Please select at least two columns to merge');
                 return;
             }
             
@@ -1291,19 +1358,18 @@
             if (!row) return;
             
             // Remove the column tag
-            const tag = row.querySelector(`.merge-tag:contains('${column}')`);
-            if (tag) tag.remove();
+            const tags = row.querySelectorAll('.merge-tag');
+            tags.forEach(tag => {
+                if (tag.textContent.includes(column)) {
+                    tag.remove();
+                }
+            });
             
             // If no columns left, remove the row
             if (row.querySelectorAll('.merge-tag').length === 0) {
                 row.remove();
             }
         }
-        
-        // Helper for :contains selector
-        HTMLElement.prototype.contains = function(text) {
-            return this.textContent.includes(text);
-        };
         
         function autoMapColumns() {
             if (csvColumns.length === 0) return;
@@ -1313,15 +1379,15 @@
             
             // Common mappings for auto-detection
             const commonMappings = {
-                'date': ['date', 'transaction date', 'timestamp', 'time'],
-                'amount': ['amount', 'value', 'price', 'total', 'sum'],
-                'description': ['description', 'note', 'details', 'memo', 'info'],
-                'category': ['category', 'type', 'group', 'classification'],
-                'name': ['name', 'full name', 'customer', 'client', 'contact'],
-                'email': ['email', 'e-mail'],
-                'phone': ['phone', 'telephone', 'mobile'],
-                'address': ['address', 'location', 'street'],
-                'status': ['status', 'state', 'condition']
+                'Date': ['date', 'transaction date', 'timestamp', 'time', 'created'],
+                'Amount': ['amount', 'value', 'price', 'total', 'sum', 'cost'],
+                'Description': ['description', 'note', 'details', 'memo', 'info', 'comments'],
+                'Category': ['category', 'type', 'group', 'classification', 'tag'],
+                'Name': ['name', 'full name', 'customer', 'client', 'contact'],
+                'Email': ['email', 'e-mail'],
+                'Phone': ['phone', 'telephone', 'mobile', 'contact number'],
+                'Address': ['address', 'location', 'street', 'city', 'zip'],
+                'Status': ['status', 'state', 'condition', 'stage']
             };
             
             // Create mappings for detected columns
@@ -1338,7 +1404,7 @@
                     if (matchingColumns.length > 1) {
                         // Create merged property for multiple matches
                         addMappingRow(
-                            property.charAt(0).toUpperCase() + property.slice(1),
+                            property,
                             matchingColumns,
                             'merged',
                             ' '
@@ -1346,7 +1412,7 @@
                     } else {
                         // Create single property for single match
                         addMappingRow(
-                            property.charAt(0).toUpperCase() + property.slice(1),
+                            property,
                             matchingColumns[0],
                             'single'
                         );
@@ -1354,7 +1420,13 @@
                 }
             });
             
-            showAlert('success', 'Auto-mapping completed!');
+            // Show success message
+            const successCount = document.querySelectorAll('#mapping-table-body tr').length;
+            if (successCount > 0) {
+                showAlert('success', `Auto-mapped ${successCount} properties!`);
+            } else {
+                showAlert('info', 'No columns matched common patterns. Please map manually.');
+            }
         }
         
         function applyMapping() {
