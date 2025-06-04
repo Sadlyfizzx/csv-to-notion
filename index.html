@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Notion CSV Importer</title>
+    <meta name="description" content="Convert bank CSV files to Notion format. Simple, fast, free.">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --secondary: #4f46e5;
+            --text: #334155;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --card-bg: #ffffff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.6;
+            padding-bottom: 40px;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 0.8rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .navbar-toggler {
+            border: none;
+            outline: none;
+            box-shadow: none;
+            margin-left: auto;
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(67, 97, 238, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        
+        /* Main Container */
+        .container-main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 50px 0 30px;
+        }
+        
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            color: var(--text);
+        }
+        
+        /* Cards */
+        .card {
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            background: var(--card-bg);
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        }
+        
+        .card-header {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 16px 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-header i {
+            font-size: 1.1rem;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 30px 20px;
+            text-align: center;
+            background-color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+        
+        .file-upload-area i {
+            font-size: 42px;
+            color: var(--primary);
+            margin-bottom: 14px;
+        }
+        
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a56d8;
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .btn-primary i {
+            color: white;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            border: none;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e09008;
+            color: white;
+        }
+        
+        /* Table-based Mapping */
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .mapping-table th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .mapping-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .mapping-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .mapping-table tr:hover td {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .mapping-table input, 
+        .mapping-table select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .mapping-table input:focus, 
+        .mapping-table select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        
+        /* Preview Table */
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .preview-table th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .preview-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .preview-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Step Indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            gap: 40px;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .step:not(:last-child):after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            right: -40px;
+            width: 40px;
+            height: 2px;
+            background: var(--border);
+        }
+        
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            font-size: 1rem;
+        }
+        
+        .step.active .step-number {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .step-label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text);
+            text-align: center;
+            max-width: 100px;
+        }
+        
+        .step.active .step-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 18px;
+            border: 1px solid transparent;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: white;
+            color: var(--text);
+            padding: 30px 0;
+            margin-top: 50px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        /* Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(67, 97, 238, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 25px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* File List */
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background-color: var(--light);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-status {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        
+        .status-success {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+        
+        .status-warning {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        
+        .file-remove {
+            color: #ef4444;
+            cursor: pointer;
+        }
+        
+        .file-remove:hover {
+            color: #dc2626;
+        }
+
+        /* Donation Button */
+        .btn-donate {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            color: #fff;
+            border: none;
+        }
+        
+        .btn-donate:hover {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 70%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 154, 158, 0.3);
+        }
+        
+        /* Column Selection */
+        .column-selection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .column-badge {
+            padding: 6px 12px;
+            background-color: var(--primary-light);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid var(--border);
+        }
+        
+        .column-badge:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .column-badge.selected {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .column-badge.selected .checkmark {
+            display: inline;
+        }
+        
+        .column-badge .checkmark {
+            display: none;
+        }
+        
+        /* Merging UI */
+        .merge-controls {
+            background-color: var(--light);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid var(--border);
+        }
+        
+        .merge-preview {
+            font-size: 0.9rem;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            min-height: 40px;
+        }
+        
+        .merge-section {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--border);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            
+            .step-indicator {
+                gap: 20px;
+            }
+            
+            .step:not(:last-child):after {
+                right: -20px;
+                width: 20px;
+            }
+            
+            .step-number {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .file-upload-area {
+                padding: 20px 15px;
+            }
+            
+            .card-body {
+                padding: 16px;
+            }
+            
+            .mapping-table {
+                font-size: 0.9rem;
+            }
+            
+            .mapping-table th,
+            .mapping-table td {
+                padding: 8px 10px;
+            }
+        }
+        
+        /* Auto-map Button */
+        .auto-map-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .auto-map-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background-color: var(--warning);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .auto-map-btn:hover {
+            background-color: #e09008;
+        }
+        
+        /* Merge Tags */
+        .merge-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: rgba(67, 97, 238, 0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.85rem;
+        }
+        
+        .merge-tag .remove {
+            margin-left: 5px;
+            cursor: pointer;
+            color: var(--danger);
+        }
+        
+        /* Merge Preview */
+        .merge-preview-item {
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .merge-preview-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-file-csv"></i>
+                <span>Notion CSV Importer</span>
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="#" class="btn btn-donate ms-lg-2 mt-2 mt-lg-0">
+                            <i class="fas fa-heart me-1"></i>Support Project
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container-main">
+            <h1>Advanced CSV to Notion Converter</h1>
+            <p>Merge columns, auto-map fields, and create perfect imports for Notion</p>
+            <div class="d-flex justify-content-center flex-wrap gap-3">
+                <a href="#upload" class="btn btn-primary px-4 py-2">
+                    <i class="fas fa-play me-2"></i>Get Started
+                </a>
+                <button class="btn btn-outline px-4 py-2" data-bs-toggle="modal" data-bs-target="#howItWorksModal">
+                    <i class="fas fa-info-circle me-2"></i>How It Works
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Step Indicator -->
+    <div class="container-main">
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-label">Upload CSV</div>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-label">Map Fields</div>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-label">Export</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-main">
+        <!-- Upload Section -->
+        <div class="card" id="upload">
+            <div class="card-header">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload CSV Files</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>Files are processed securely in your browser
+                </div>
+                
+                <div class="file-upload-area" id="drop-area">
+                    <i class="fas fa-file-csv"></i>
+                    <h4>Drag & Drop your CSV files here</h4>
+                    <p class="text-muted">Supports multiple CSV files with automatic column merging</p>
+                    <button class="btn btn-primary mt-3" id="browse-btn">
+                        <i class="fas fa-folder-open me-2"></i>Browse Files
+                    </button>
+                    <input type="file" id="file-input" multiple accept=".csv" style="display: none;">
+                </div>
+                
+                <div class="spinner" id="loading-spinner"></div>
+                
+                <div class="mt-4" id="file-list-container" style="display: none;">
+                    <h5 class="mb-3">Uploaded Files:</h5>
+                    <div class="file-list" id="file-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mapping Section -->
+        <div class="card" id="mapping">
+            <div class="card-header">
+                <i class="fas fa-map"></i>
+                <span>Map CSV Fields to Notion Properties</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" id="mapping-alert">
+                    <i class="fas fa-info-circle me-2"></i>Upload CSV files to begin mapping
+                </div>
+                
+                <div id="mapping-container" style="display: none;">
+                    <div class="auto-map-container">
+                        <div>
+                            <h5 class="mb-3">Detected CSV Columns:</h5>
+                            <p class="text-muted">Click columns to select for merging</p>
+                        </div>
+                        <button class="auto-map-btn" id="auto-map-btn">
+                            <i class="fas fa-magic"></i> Auto Map
+                        </button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-4" id="csv-columns"></div>
+                    
+                    <!-- Merge Section -->
+                    <div class="merge-section" id="merge-section">
+                        <h5><i class="fas fa-object-group me-2"></i>Merge Selected Columns</h5>
+                        <div class="merge-controls">
+                            <div class="mb-3">
+                                <label class="form-label">New Property Name</label>
+                                <input type="text" class="form-control" id="merge-property-name" placeholder="e.g., Full Name">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Separator</label>
+                                <input type="text" class="form-control" id="merge-separator" value=" " placeholder="e.g., space or comma">
+                            </div>
+                            <button class="btn btn-primary" id="create-merge-btn">
+                                <i class="fas fa-plus me-2"></i>Create Merged Property
+                            </button>
+                            
+                            <div class="merge-preview mt-3" id="merge-preview">
+                                <div class="mb-2"><strong>Preview:</strong></div>
+                                <div id="merge-preview-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mb-3 mt-4">Notion Properties:</h5>
+                    
+                    <table class="mapping-table">
+                        <thead>
+                            <tr>
+                                <th width="35%">Property Name</th>
+                                <th width="35%">CSV Columns</th>
+                                <th width="15%">Type</th>
+                                <th width="15%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mapping-table-body">
+                            <!-- Rows will be added here dynamically -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="d-flex justify-content-end mt-2">
+                        <button class="btn btn-outline" id="add-mapping-row">
+                            <i class="fas fa-plus me-1"></i>Add Property
+                        </button>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <button class="btn btn-primary py-2" id="apply-mapping-btn">
+                            <i class="fas fa-check me-2"></i>Apply Mapping & Preview
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="card" id="export">
+            <div class="card-header">
+                <i class="fas fa-file-export"></i>
+                <span>Export to Notion</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" id="export-alert">
+                    <i class="fas fa-info-circle me-2"></i>Complete mapping to enable export
+                </div>
+                
+                <div id="export-content" style="display: none;">
+                    <div class="mb-4">
+                        <h5>Preview of Mapped Data:</h5>
+                        <div class="table-responsive">
+                            <table class="preview-table">
+                                <thead id="preview-header">
+                                    <!-- Headers will be added here -->
+                                </thead>
+                                <tbody id="preview-body">
+                                    <!-- Preview rows will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="alert alert-light">
+                                <h5><i class="fab fa-notion me-2"></i>Notion Setup</h5>
+                                <p class="mb-1">Create database with:</p>
+                                <ul class="mb-0">
+                                    <li>Title property</li>
+                                    <li>Date property</li>
+                                    <li>Number property</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary" id="download-csv-btn">
+                                    <i class="fas fa-file-csv me-2"></i>Download CSV
+                                </button>
+                                <button class="btn btn-outline">
+                                    <i class="fas fa-copy me-2"></i>Copy Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container-main">
+            <div class="d-flex flex-column align-items-center">
+                <div class="mb-3">
+                    <h5 class="mb-0">Enhanced Notion CSV Importer</h5>
+                    <p class="mb-0 text-muted">Column Merging & Auto-Mapping</p>
+                </div>
+                <div>
+                    <p class="mb-0 text-muted">© 2025 | All processing occurs locally in your browser</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- How It Works Modal -->
+    <div class="modal fade" id="howItWorksModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>How It Works</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <div class="d-flex mb-3">
+                            <div class="step-number me-3">1</div>
+                            <div>
+                                <h6>Upload CSV Files</h6>
+                                <p class="mb-0">Process multiple CSV files securely in the browser</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex mb-3">
+                            <div class="step-number me-3">2</div>
+                            <div>
+                                <h6>Map Properties</h6>
+                                <p class="mb-0">Merge columns and auto-map fields for Notion</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex">
+                            <div class="step-number me-3">3</div>
+                            <div>
+                                <h6>Export to Notion</h6>
+                                <p class="mb-0">Download a formatted CSV ready for Notion import</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-light">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>Security Note:</strong> Your financial data never leaves your computer.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let uploadedFiles = [];
+        let csvColumns = [];
+        let csvData = [];
+        let mappedData = [];
+        let propertyMappings = [];
+        let rowCounter = 0;
+        let selectedColumns = [];
+        
+        // Initialize navbar toggler position
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbarToggler = document.querySelector('.navbar-toggler');
+            if (navbarToggler) {
+                navbarToggler.style.marginLeft = 'auto';
+            }
+        });
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', initApp);
+        
+        function initApp() {
+            // Set up event listeners
+            document.getElementById('browse-btn').addEventListener('click', function() {
+                document.getElementById('file-input').click();
+            });
+            
+            document.getElementById('file-input').addEventListener('change', handleFileSelect);
+            
+            document.getElementById('add-mapping-row').addEventListener('click', addMappingRow);
+            
+            document.getElementById('apply-mapping-btn').addEventListener('click', applyMapping);
+            
+            document.getElementById('download-csv-btn').addEventListener('click', downloadCSV);
+            
+            document.getElementById('create-merge-btn').addEventListener('click', createMergedProperty);
+            
+            document.getElementById('auto-map-btn').addEventListener('click', autoMapColumns);
+            
+            // Set up drag and drop
+            setupDragAndDrop();
+            
+            // Add initial mapping row
+            addMappingRow();
+        }
+        
+        function setupDragAndDrop() {
+            const dropArea = document.getElementById('drop-area');
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight() {
+                dropArea.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('drag-over');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+        }
+        
+        function handleFileSelect() {
+            const files = this.files;
+            handleFiles(files);
+            this.value = ''; // Reset to allow adding same files again
+        }
+        
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            // Show loading spinner
+            document.getElementById('loading-spinner').style.display = 'block';
+            
+            // Process each file
+            const filePromises = Array.from(files).map(file => {
+                return new Promise((resolve, reject) => {
+                    // Skip if file already exists
+                    if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        resolve({ status: 'duplicate', file });
+                        return;
+                    }
+                    
+                    // Add to uploaded files
+                    uploadedFiles.push(file);
+                    
+                    // Parse the CSV file
+                    Papa.parse(file, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            if (results.errors.length > 0) {
+                                console.error('CSV parsing errors:', results.errors);
+                                reject({ error: 'Error parsing CSV file', file, errors: results.errors });
+                                return;
+                            }
+                            
+                            // Store data and columns
+                            const data = results.data;
+                            const columns = results.meta.fields || [];
+                            
+                            resolve({ status: 'success', file, data, columns });
+                        },
+                        error: function(error) {
+                            console.error('CSV parsing error:', error);
+                            reject({ error: 'Error reading CSV file', file });
+                        }
+                    });
+                });
+            });
+            
+            // Handle all file processing
+            Promise.allSettled(filePromises).then(results => {
+                // Reset data
+                csvData = [];
+                csvColumns = [];
+                const allColumns = new Set();
+                
+                // Process results
+                results.forEach((result, index) => {
+                    if (result.status === 'fulfilled') {
+                        const value = result.value;
+                        
+                        if (value.status === 'duplicate') {
+                            addFileToUI(value.file, 'duplicate');
+                        } else {
+                            // Add data
+                            csvData = csvData.concat(value.data);
+                            
+                            // Add columns
+                            value.columns.forEach(col => allColumns.add(col));
+                            
+                            addFileToUI(value.file, 'success');
+                        }
+                    } else {
+                        const file = files[index];
+                        addFileToUI(file, 'error', result.reason.error);
+                    }
+                });
+                
+                // Update columns
+                csvColumns = Array.from(allColumns);
+                
+                // Update UI
+                document.getElementById('file-list-container').style.display = 'block';
+                
+                if (csvColumns.length > 0) {
+                    document.getElementById('mapping-container').style.display = 'block';
+                    document.getElementById('mapping-alert').style.display = 'none';
+                    document.getElementById('step2').classList.add('active');
+                    
+                    // Populate CSV columns
+                    populateCSVColumns();
+                    
+                    // Update mapping dropdowns
+                    updateMappingDropdowns();
+                }
+                
+                document.getElementById('loading-spinner').style.display = 'none';
+            });
+        }
+        
+        function addFileToUI(file, status, errorMessage = '') {
+            const fileListContainer = document.getElementById('file-list');
+            const fileId = `file-${Date.now()}-${file.name}`;
+            
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.id = fileId;
+            fileItem.innerHTML = `
+                <div class="file-info">
+                    <i class="fas fa-file-csv"></i>
+                    <div>
+                        <div class="fw-bold">${file.name}</div>
+                        <small>${formatFileSize(file.size)}</small>
+                    </div>
+                    <span class="file-status ${status === 'success' ? 'status-success' : status === 'duplicate' ? 'status-warning' : ''}">
+                        ${status === 'success' ? 'Processed' : status === 'duplicate' ? 'Duplicate' : 'Error'}
+                    </span>
+                </div>
+                <div class="file-actions">
+                    ${errorMessage ? `<small class="text-danger">${errorMessage}</small>` : ''}
+                    <span class="file-remove" title="Remove file">
+                        <i class="fas fa-times"></i>
+                    </span>
+                </div>
+            `;
+            
+            fileListContainer.appendChild(fileItem);
+            
+            // Add remove event listener
+            fileItem.querySelector('.file-remove').addEventListener('click', function() {
+                // Remove from UI
+                fileItem.remove();
+                
+                // Remove from uploaded files
+                uploadedFiles = uploadedFiles.filter(f => f.name !== file.name || f.size !== file.size);
+                
+                // Remove file data
+                if (status === 'success') {
+                    // Rebuild csvData and columns without this file
+                    rebuildDataAfterFileRemoval(file);
+                }
+            });
+        }
+        
+        function rebuildDataAfterFileRemoval(removedFile) {
+            // Reset data
+            csvData = [];
+            csvColumns = [];
+            const allColumns = new Set();
+            
+            // Re-process all remaining files
+            const reprocessPromises = uploadedFiles.map(file => {
+                return new Promise((resolve) => {
+                    Papa.parse(file, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            if (!results.errors.length) {
+                                csvData = csvData.concat(results.data);
+                                results.meta.fields.forEach(col => allColumns.add(col));
+                            }
+                            resolve();
+                        }
+                    });
+                });
+            });
+            
+            Promise.all(reprocessPromises).then(() => {
+                csvColumns = Array.from(allColumns);
+                
+                // Update UI
+                populateCSVColumns();
+                updateMappingDropdowns();
+                
+                // If no files left, reset UI
+                if (uploadedFiles.length === 0) {
+                    document.getElementById('mapping-container').style.display = 'none';
+                    document.getElementById('mapping-alert').style.display = 'block';
+                    document.getElementById('step2').classList.remove('active');
+                    document.getElementById('step3').classList.remove('active');
+                    document.getElementById('export-content').style.display = 'none';
+                    document.getElementById('export-alert').style.display = 'block';
+                }
+            });
+        }
+        
+        function populateCSVColumns() {
+            const columnsContainer = document.getElementById('csv-columns');
+            columnsContainer.innerHTML = '';
+            
+            if (csvColumns.length === 0) {
+                columnsContainer.innerHTML = '<div class="text-muted">No columns detected</div>';
+                return;
+            }
+            
+            csvColumns.forEach(col => {
+                const badge = document.createElement('div');
+                badge.className = 'column-badge';
+                badge.dataset.column = col;
+                badge.innerHTML = `
+                    ${col}
+                    <span class="checkmark"><i class="fas fa-check"></i></span>
+                `;
+                
+                badge.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                    updateSelectedColumns();
+                });
+                
+                columnsContainer.appendChild(badge);
+            });
+        }
+        
+        function updateSelectedColumns() {
+            selectedColumns = [];
+            document.querySelectorAll('.column-badge.selected').forEach(badge => {
+                selectedColumns.push(badge.dataset.column);
+            });
+            
+            // Show/hide merge section
+            const mergeSection = document.getElementById('merge-section');
+            mergeSection.style.display = selectedColumns.length > 1 ? 'block' : 'none';
+            
+            // Update merge preview
+            updateMergePreview();
+        }
+        
+        function updateMergePreview() {
+            const previewContent = document.getElementById('merge-preview-content');
+            previewContent.innerHTML = '';
+            
+            if (selectedColumns.length === 0) return;
+            
+            // Show a few sample rows
+            const sampleCount = Math.min(3, csvData.length);
+            const separator = document.getElementById('merge-separator').value || ' ';
+            
+            for (let i = 0; i < sampleCount; i++) {
+                const row = csvData[i];
+                const mergedValue = selectedColumns.map(col => row[col] || '').join(separator);
+                
+                const previewItem = document.createElement('div');
+                previewItem.className = 'merge-preview-item';
+                previewItem.textContent = mergedValue;
+                previewContent.appendChild(previewItem);
+            }
+        }
+        
+        function createMergedProperty() {
+            const propertyName = document.getElementById('merge-property-name').value.trim();
+            const separator = document.getElementById('merge-separator').value || ' ';
+            
+            if (!propertyName) {
+                showAlert('warning', 'Please enter a property name for the merged column');
+                return;
+            }
+            
+            if (selectedColumns.length < 2) {
+                showAlert('warning', 'Please select at least two columns to merge');
+                return;
+            }
+            
+            // Add the merged property to mappings
+            addMappingRow(propertyName, selectedColumns, 'merged', separator);
+            
+            // Reset UI
+            document.querySelectorAll('.column-badge.selected').forEach(badge => {
+                badge.classList.remove('selected');
+            });
+            document.getElementById('merge-property-name').value = '';
+            selectedColumns = [];
+            document.getElementById('merge-section').style.display = 'none';
+        }
+        
+        function addMappingRow(propertyName = '', columns = [], type = 'single', separator = ' ') {
+            const rowId = `row-${rowCounter++}`;
+            const tbody = document.getElementById('mapping-table-body');
+            
+            // If columns is a string, convert to array for consistency
+            if (typeof columns === 'string') columns = [columns];
+            
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.innerHTML = `
+                <td>
+                    <input type="text" class="form-control property-name" value="${propertyName}" placeholder="e.g. Full Name">
+                </td>
+                <td class="property-columns-cell">
+                    <div class="d-flex flex-wrap gap-1" id="${rowId}-columns">
+                        ${columns.map(col => `
+                            <span class="merge-tag">
+                                ${col}
+                                <span class="remove" onclick="removeColumnFromMapping('${rowId}', '${col}')">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                            </span>
+                        `).join('')}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge ${type === 'merged' ? 'bg-warning' : 'bg-primary'}">
+                        ${type === 'merged' ? 'Merged' : 'Single'}
+                    </span>
+                </td>
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-outline move-up" title="Move up">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline move-down" title="Move down">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger remove-row" title="Remove">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+                <input type="hidden" class="property-type" value="${type}">
+                <input type="hidden" class="property-separator" value="${separator}">
+            `;
+            
+            tbody.appendChild(row);
+            
+            // Add event listeners to buttons
+            row.querySelector('.move-up').addEventListener('click', function() {
+                const prev = row.previousElementSibling;
+                if (prev) {
+                    tbody.insertBefore(row, prev);
+                }
+            });
+            
+            row.querySelector('.move-down').addEventListener('click', function() {
+                const next = row.nextElementSibling;
+                if (next) {
+                    tbody.insertBefore(next, row);
+                }
+            });
+            
+            row.querySelector('.remove-row').addEventListener('click', function() {
+                row.remove();
+            });
+        }
+        
+        function removeColumnFromMapping(rowId, column) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            
+            // Remove the column tag
+            const tag = row.querySelector(`.merge-tag:contains('${column}')`);
+            if (tag) tag.remove();
+            
+            // If no columns left, remove the row
+            if (row.querySelectorAll('.merge-tag').length === 0) {
+                row.remove();
+            }
+        }
+        
+        // Helper for :contains selector
+        HTMLElement.prototype.contains = function(text) {
+            return this.textContent.includes(text);
+        };
+        
+        function autoMapColumns() {
+            if (csvColumns.length === 0) return;
+            
+            // Clear existing mappings
+            document.getElementById('mapping-table-body').innerHTML = '';
+            
+            // Common mappings for auto-detection
+            const commonMappings = {
+                'date': ['date', 'transaction date', 'timestamp', 'time'],
+                'amount': ['amount', 'value', 'price', 'total', 'sum'],
+                'description': ['description', 'note', 'details', 'memo', 'info'],
+                'category': ['category', 'type', 'group', 'classification'],
+                'name': ['name', 'full name', 'customer', 'client', 'contact'],
+                'email': ['email', 'e-mail'],
+                'phone': ['phone', 'telephone', 'mobile'],
+                'address': ['address', 'location', 'street'],
+                'status': ['status', 'state', 'condition']
+            };
+            
+            // Create mappings for detected columns
+            Object.keys(commonMappings).forEach(property => {
+                const propertyColumns = commonMappings[property];
+                
+                // Find matching columns
+                const matchingColumns = csvColumns.filter(col => {
+                    const lowerCol = col.toLowerCase();
+                    return propertyColumns.some(prop => lowerCol.includes(prop));
+                });
+                
+                if (matchingColumns.length > 0) {
+                    if (matchingColumns.length > 1) {
+                        // Create merged property for multiple matches
+                        addMappingRow(
+                            property.charAt(0).toUpperCase() + property.slice(1),
+                            matchingColumns,
+                            'merged',
+                            ' '
+                        );
+                    } else {
+                        // Create single property for single match
+                        addMappingRow(
+                            property.charAt(0).toUpperCase() + property.slice(1),
+                            matchingColumns[0],
+                            'single'
+                        );
+                    }
+                }
+            });
+            
+            showAlert('success', 'Auto-mapping completed!');
+        }
+        
+        function applyMapping() {
+            // Collect mappings
+            propertyMappings = [];
+            const rows = document.querySelectorAll('#mapping-table-body tr');
+            
+            rows.forEach(row => {
+                const nameInput = row.querySelector('.property-name');
+                const typeInput = row.querySelector('.property-type');
+                const separatorInput = row.querySelector('.property-separator');
+                const columns = Array.from(row.querySelectorAll('.merge-tag')).map(tag => tag.textContent.trim().replace('×', ''));
+                
+                const name = nameInput.value.trim();
+                
+                if (name && columns.length > 0) {
+                    propertyMappings.push({
+                        name: name,
+                        columns: columns,
+                        type: typeInput.value,
+                        separator: separatorInput ? separatorInput.value : ' '
+                    });
+                }
+            });
+            
+            if (propertyMappings.length === 0) {
+                showAlert('warning', 'Please add at least one valid mapping');
+                return;
+            }
+            
+            // Process data with mappings
+            processMappedData();
+            
+            // Update UI
+            document.getElementById('export-content').style.display = 'block';
+            document.getElementById('export-alert').style.display = 'none';
+            document.getElementById('step3').classList.add('active');
+            
+            showAlert('success', 'Mapping applied successfully!');
+        }
+        
+        function processMappedData() {
+            mappedData = [];
+            
+            // Process each row of CSV data
+            csvData.forEach(csvRow => {
+                const newRow = {};
+                
+                // Create new row with mapped properties
+                propertyMappings.forEach(mapping => {
+                    if (mapping.type === 'merged') {
+                        // For merged columns, join values with separator
+                        const values = mapping.columns.map(col => csvRow[col] || '');
+                        newRow[mapping.name] = values.join(mapping.separator);
+                    } else {
+                        // For single columns, use the first column
+                        newRow[mapping.name] = csvRow[mapping.columns[0]] || '';
+                    }
+                });
+                
+                mappedData.push(newRow);
+            });
+            
+            // Update preview
+            updatePreview();
+        }
+        
+        function updatePreview() {
+            const previewHeader = document.getElementById('preview-header');
+            const previewBody = document.getElementById('preview-body');
+            
+            // Clear existing preview
+            previewHeader.innerHTML = '';
+            previewBody.innerHTML = '';
+            
+            // Add header row
+            const headerRow = document.createElement('tr');
+            propertyMappings.forEach(mapping => {
+                const th = document.createElement('th');
+                th.textContent = mapping.name;
+                headerRow.appendChild(th);
+            });
+            previewHeader.appendChild(headerRow);
+            
+            // Add first 5 rows to preview
+            const previewRows = Math.min(5, mappedData.length);
+            
+            for (let i = 0; i < previewRows; i++) {
+                const rowData = mappedData[i];
+                const row = document.createElement('tr');
+                
+                propertyMappings.forEach(mapping => {
+                    const td = document.createElement('td');
+                    td.textContent = rowData[mapping.name] || '';
+                    row.appendChild(td);
+                });
+                
+                previewBody.appendChild(row);
+            }
+            
+            // Add row count info
+            if (mappedData.length > previewRows) {
+                const row = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = propertyMappings.length;
+                td.className = 'text-center text-muted fst-italic';
+                td.textContent = `...and ${mappedData.length - previewRows} more rows`;
+                row.appendChild(td);
+                previewBody.appendChild(row);
+            }
+        }
+        
+        function downloadCSV() {
+            if (mappedData.length === 0) {
+                showAlert('warning', 'No data to export. Please apply mapping first.');
+                return;
+            }
+            
+            // Create CSV content
+            const headers = propertyMappings.map(m => m.name);
+            const csvContent = Papa.unparse({
+                fields: headers,
+                data: mappedData
+            });
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'notion-import.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showAlert('success', 'CSV downloaded successfully!');
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function showAlert(type, message) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.role = 'alert';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.querySelector('.container-main').prepend(alert);
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 150);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
